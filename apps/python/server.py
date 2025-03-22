@@ -12,6 +12,7 @@ import pandas as pd
 import re
 import uvicorn
 from pydantic import BaseModel, Field
+from typing import Optional
 from fastapi.middleware.cors import CORSMiddleware
 app = FastAPI()
 app.add_middleware(
@@ -52,9 +53,9 @@ async def startup_event():
     api_key="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",
     model_name="gemma2-9b-it",
     temperature=0,
-)
+    )
     llm = OpenRouter(
-        api_key="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",
+        api_key="",
         model="openai/gpt-4o-2024-11-20",
     )
     agent = initialize_agent(
@@ -198,6 +199,99 @@ tool4=Tool(
     func=deleteSomething,
     description="user want to delete somthing from the csv"
 )
+
+class Infrerence(BaseModel):
+    question:str
+@app.post("/chatllm/")
+def llmInfer(query:Infrerence):
+    if groq is None:
+        return {"message": "LLM Not init"}
+    try:
+         result=groq.invoke(query.question)
+         return {"result":result.content}
+    except Exception as e:
+        return {"messages": f"An error occurred during inference: {str(e)}"}
+
+
+
+from yt_dlp import YoutubeDL
+from langchain_community.document_loaders import YoutubeLoader
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
+from langchain.vectorstores import FAISS
+from langchain.retrievers import EnsembleRetriever, BM25Retriever
+from langchain.retrievers import ContextualCompressionRetriever
+from langchain.retrievers.document_compressors import DocumentCompressorPipeline
+from langchain_community.document_transformers import EmbeddingsRedundantFilter
+from langchain.prompts import PromptTemplate
+from langchain_core.runnables import RunnablePassthrough
+from langchain_core.output_parsers import StrOutputParser
+from langchain_cohere import CohereRerank
+
+
+def load_and_process_data(link):
+    try:
+        loader = YoutubeLoader.from_youtube_url(
+    link, add_video_info=False
+        )
+        texts=loader.load()
+        chunking = RecursiveCharacterTextSplitter(chunk_size=200, chunk_overlap=30)
+        chunks = chunking.split_documents(texts)
+        db = FAISS.from_documents(chunks, GoogleGenerativeAIEmbeddings(google_api_key="AIzaSyBNAqwF1Uyse800GQ0ML3dKP5CNoBRceRg", model="models/embedding-001"))
+        return db, chunks
+    except UnicodeDecodeError as e:
+        print(f"Error decoding file {link}: {e}")
+        raise
+    except Exception as e:
+        print(f"Error loading data: {e}")
+        raise
+def Rag_Calling(final_retriver):
+    _redudentfilter = EmbeddingsRedundantFilter(embeddings=GoogleGenerativeAIEmbeddings(google_api_key="AIzaSyBNAqwF1Uyse800GQ0ML3dKP5CNoBRceRg", model="models/embedding-001"))
+    rerank = CohereRerank(cohere_api_key="EA5kdJri7hsSOW2i801sXGQSZgW1iP5GwPsB3MF1",model="rerank-english-v3.0")
+    pipeline = DocumentCompressorPipeline(transformers=[_redudentfilter, rerank])
+    final_chain = ContextualCompressionRetriever(base_compressor=pipeline, base_retriever=final_retriver)
+    return final_chain
+
+class YoutubeLink(BaseModel):
+    link:str
+
+class YoutubeQuestionAnswer(BaseModel):
+    link: Optional[str] = Field(default=None, description="Extract the youtube link only from the query")
+    query: str = Field(default="Now I Studied", description="Paste the user question here")
+@app.post("/youtubesummerization/")
+def Youtube(link:YoutubeLink):
+    global rag_youtube
+    structured_llm=groq.with_structured_output(YoutubeQuestionAnswer)
+    answer=structured_llm.invoke(link.link)
+    print(answer)
+    if answer.link !="None" and rag_youtube is None: 
+        db,chunks=load_and_process_data(answer.link)
+        retriver1 = db.as_retriever(search_kwargs={"k": 4})
+        retriver2 = BM25Retriever.from_documents(chunks, k=4)
+        final_retriver = EnsembleRetriever(retrievers=[retriver1, retriver2], weights=[0.5, 0.5])
+        template = "You should answer the question based on the context. Context: {context} and Question: {question}"
+        prompt = PromptTemplate.from_template(template)
+        retriver = Rag_Calling(final_retriver)
+        chain = (
+            {
+                "context": retriver,
+                "question": RunnablePassthrough()
+            }
+            | prompt
+            | groq
+            | StrOutputParser()
+        )
+        
+        rag_youtube=chain
+    else:
+        if rag_youtube is None:
+            return {"message": "You have not uploaded any video link"}
+    try:
+        print(answer.query)
+        result = rag_youtube.invoke(answer.query)
+        return {"result": result}
+    except Exception as e:
+        return {"message": f"An error occurred during inference: {str(e)}"}
 
 
 if __name__ == '__main__':
