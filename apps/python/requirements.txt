@@ -9,4 +9,7 @@ llama-index==0.12.5
 llama-index-llms-openrouter==0.3.1
 llama-index-experimental==0.5.2
 langchain-groq==0.2.1
+yt_dlp
+langchain_core
+langchain_cohere
 langchain_together
