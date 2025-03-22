@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { MessageSquare, FileText, Library, CheckSquare, Layout, User } from "lucide-react";
+import { MessageSquare, FileText, Library, CheckSquare,Image, Layout, User } from "lucide-react";
 
 const NavigationBar = () => {
   const location = useLocation();
@@ -53,6 +53,15 @@ const NavigationBar = () => {
             <Layout size={18} className={isActive('/board') ? 'text-blue-600' : 'text-gray-600'} />
             <span>Board</span>
           </Link>
+
+          <Link 
+            to="/image" 
+            className={`nav-link flex items-center space-x-2 ${isActive('/board') ? 'nav-link-active' : ''}`}
+          >
+            <Image size={18} className={isActive('/image') ? 'text-blue-600' : 'text-gray-600'} />
+            <span>Image</span>
+          </Link>
+
         </div>
         
         <div className="flex items-center">

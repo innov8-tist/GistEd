@@ -1,5 +1,3 @@
-
-import React from "react";
 import NavigationBar from "@/components/NavigationBar";
 import { ChatHistory, ChatMessageList, ChatInput } from "@/components/ChatInterface";
 import { useChatState } from "@/hooks/useChatState";
@@ -18,17 +16,17 @@ const Chat = () => {
 
   const activeChat = getActiveChat();
 
-  const handleSendMessage = () => {
+
+  const handleSendMessage = (isYtEnabled: boolean) => {
     if (inputValue.trim()) {
-      sendMessage(inputValue);
+      sendMessage(inputValue, isYtEnabled); // Pass the YouTube toggle state
     }
   };
-
   return (
-    <div className="min-h-screen bg-white p-6">
+    <div className="min-h-screen bg-white p-0">
       <NavigationBar />
       
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-8xl mx-auto">
         <div className="flex gap-6 h-[calc(100vh-8rem)]">
           <div className="w-1/4">
             <ChatHistory

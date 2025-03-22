@@ -1,8 +1,22 @@
-import React, { useRef, useEffect } from "react";
-import { Send, Plus, Paperclip, Youtube } from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
+import { Paperclip, Youtube, Mic, Plus } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
-import { ChatMessage, ChatSession } from "@/hooks/useChatState";
 
+// Define types for ChatMessage and ChatSession
+interface ChatMessage {
+  id: string;
+  sender: "user" | "ai";
+  content: string;
+}
+
+interface ChatSession {
+  id: string;
+  title: string;
+  lastMessage: string;
+  timestamp: Date;
+}
+
+// Props for ChatHistory
 interface ChatHistoryProps {
   sessions: ChatSession[];
   activeChatId: string | null;
@@ -10,6 +24,7 @@ interface ChatHistoryProps {
   onNewChat: () => void;
 }
 
+// ChatHistory Component
 export const ChatHistory: React.FC<ChatHistoryProps> = ({
   sessions,
   activeChatId,
@@ -18,7 +33,7 @@ export const ChatHistory: React.FC<ChatHistoryProps> = ({
 }) => {
   return (
     <div className="w-full bg-gray-50 rounded-lg p-4 h-[calc(100vh-10rem)] overflow-y-auto">
-      <button 
+      <button
         onClick={onNewChat}
         className="w-full mb-4 flex items-center justify-center space-x-2 bg-white py-3 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors"
       >
@@ -33,11 +48,17 @@ export const ChatHistory: React.FC<ChatHistoryProps> = ({
             key={session.id}
             onClick={() => onSelectSession(session.id)}
             className={`w-full text-left p-3 rounded-lg transition-colors ${
-              activeChatId === session.id ? "bg-blue-50 border-blue-100" : "hover:bg-gray-100"
+              activeChatId === session.id
+                ? "bg-blue-50 border-blue-100"
+                : "hover:bg-gray-100"
             }`}
           >
-            <div className="font-medium text-gray-900 truncate">{session.title}</div>
-            <div className="text-sm text-gray-500 truncate">{session.lastMessage}</div>
+            <div className="font-medium text-gray-900 truncate">
+              {session.title}
+            </div>
+            <div className="text-sm text-gray-500 truncate">
+              {session.lastMessage}
+            </div>
             <div className="text-xs text-gray-400 mt-1">
               {formatDistanceToNow(session.timestamp, { addSuffix: true })}
             </div>
@@ -48,10 +69,12 @@ export const ChatHistory: React.FC<ChatHistoryProps> = ({
   );
 };
 
+// Props for ChatMessageList
 interface ChatMessageListProps {
   messages: ChatMessage[] | undefined;
 }
 
+// ChatMessageList Component
 export const ChatMessageList: React.FC<ChatMessageListProps> = ({ messages }) => {
   const endOfMessagesRef = useRef<HTMLDivElement>(null);
 
@@ -74,9 +97,12 @@ export const ChatMessageList: React.FC<ChatMessageListProps> = ({ messages }) =>
         ))
       ) : (
         <div className="flex flex-col items-center justify-center h-full">
-          <h3 className="text-2xl font-medium text-gray-500 mb-2">EduSpark AI Assistant</h3>
+          <h3 className="text-2xl font-medium text-gray-500 mb-2">
+            EduSpark AI Assistant
+          </h3>
           <p className="text-gray-400 max-w-md text-center">
-            Ask me anything about your studies, research papers, or learning materials.
+            Ask me anything about your studies, research papers, or learning
+            materials.
           </p>
         </div>
       )}
@@ -85,12 +111,67 @@ export const ChatMessageList: React.FC<ChatMessageListProps> = ({ messages }) =>
   );
 };
 
+// Props for ChatInput
 interface ChatInputProps {
   value: string;
   onChange: (value: string) => void;
   onSend: () => void;
 }
+
+// ChatInput Component
 export const ChatInput: React.FC<ChatInputProps> = ({ value, onChange, onSend }) => {
+  const [isListening, setIsListening] = useState(false);
+  const [recognition, setRecognition] = useState<SpeechRecognition | null>(null);
+
+  useEffect(() => {
+    // Check for browser support
+    if (!("SpeechRecognition" in window || "webkitSpeechRecognition" in window)) {
+      console.warn("Speech recognition is not supported in this browser.");
+      return;
+    }
+
+    const SpeechRecognition =
+      window.SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const recognitionInstance = new SpeechRecognition();
+    recognitionInstance.continuous = false; // Stop after a pause
+    recognitionInstance.interimResults = false; // Only final results
+    recognitionInstance.lang = "en-US"; // Set language
+
+    recognitionInstance.onresult = (event: SpeechRecognitionEvent) => {
+      console.log("Speech recognition result:", event.results);
+      const transcript = event.results[0][0].transcript;
+      onChange(transcript); // Update the chat input with the recognized text
+      setIsListening(false); // Stop listening
+    };
+
+    recognitionInstance.onend = () => {
+      console.log("Speech recognition ended.");
+      setIsListening(false); // Stop listening when the API stops
+    };
+
+    recognitionInstance.onerror = (event: SpeechRecognitionErrorEvent) => {
+      console.error("Speech recognition error:", event.error);
+      setIsListening(false); // Stop listening on error
+
+      // Display a user-friendly error message
+      alert(`Speech recognition failed: ${event.error}. Please check your internet connection and try again.`);
+    };
+
+    setRecognition(recognitionInstance);
+  }, [onChange]);
+
+  const handleMicClick = () => {
+    if (recognition) {
+      if (!isListening) {
+        recognition.start(); // Start listening
+        setIsListening(true);
+      } else {
+        recognition.stop(); // Stop listening
+        setIsListening(false);
+      }
+    }
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -120,28 +201,18 @@ export const ChatInput: React.FC<ChatInputProps> = ({ value, onChange, onSend })
         />
 
         <button
-          onClick={onSend}
-          disabled={!value.trim()}
+          onClick={handleMicClick}
+          disabled={!recognition}
           className={`absolute right-3 p-1.5 rounded-full ${
-            value.trim() ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-400"
+            isListening
+              ? "bg-red-500 text-white"
+              : value.trim()
+              ? "bg-blue-500 text-white"
+              : "bg-gray-200 text-gray-400"
           } transition-colors`}
         >
-          <Send size={18} />
+          <Mic size={18} />
         </button>
-      </div>
-    </div>
-  );
-};
-
-export const ChatContainer: React.FC = () => {
-  return (
-    <div className="flex w-full h-screen">
-      <div className="w-1/4">
-        <ChatHistory sessions={[]} activeChatId={null} onSelectSession={() => {}} onNewChat={() => {}} />
-      </div>
-      <div className="flex flex-col w-3/4">
-        <ChatMessageList messages={[]} />
-        <ChatInput value="" onChange={() => {}} onSend={() => {}} />
       </div>
     </div>
   );
