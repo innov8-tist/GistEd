@@ -17,3 +17,5 @@ langgraph
 email
 langchain_core
 langchain_community
+crewai==0.30.11 
+crewai-tools==0.2.6
