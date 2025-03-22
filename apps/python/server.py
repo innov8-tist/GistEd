@@ -54,7 +54,7 @@ async def startup_event():
     temperature=0,
 )
     llm = OpenRouter(
-        api_key="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",
+        api_key="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",
         model="openai/gpt-4o-2024-11-20",
     )
     agent = initialize_agent(
