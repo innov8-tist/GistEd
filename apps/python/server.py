@@ -383,7 +383,182 @@ def youtubeExtraction(query: Inference):
     download_video_segment(result.link, result.start_time, result.end_time, title.replace(" ",""))
 
     return {"message": "Video downloaded and stored in cloud","title":title}
+################################## Email Automation ##############################################################
+from pydantic import BaseModel
+from langgraph.graph import MessagesState
+from typing import Optional
+import smtplib
+import ssl
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.mime.base import MIMEBase
+from email import encoders
+from langgraph.graph import StateGraph,MessagesState,START,END
+from langchain_community.utilities import SQLDatabase
+from pydantic import Field,BaseModel
+import datetime
+class MyState(MessagesState):
+    description:str
+    section:str
+    under_section:list
+    final_res:dict
+    final_path:list
+    reciver:str
 
 
+class EmailSender(BaseModel):
+    sender:str
+    reciver:str
+class FMstate(BaseModel):
+    description:str | None =Field(default=None,description="The Description that user give")
+    section: str | None = Field(default=None, description="The section user mentioned") 
+class Binary_Score(BaseModel):
+    binary_score:str =Field("The binary score should be either 'yes' or 'no'. If there is any relevance, mark it as 'yes'; otherwise, mark it as 'no'.")
+
+
+def FormatCall(state):
+    final_llm=groq.with_structured_output(FMstate)
+    res=final_llm.invoke(state['messages'][-1].content)
+    return {"description":res.description,"section":res.section}
+import psycopg2
+
+def tool_calling_fun1(section):
+    connection = psycopg2.connect(
+        dbname="genedu",
+        user="postgres",
+        password="manu",
+        host="localhost",
+        port=5432
+    )
+
+    try:
+        cursor = connection.cursor()
+
+        fetch_query = """
+        SELECT * FROM cloud 
+        WHERE section = %s 
+        """
+
+        cursor.execute(fetch_query, (section,))
+        datas = cursor.fetchall()  
+
+
+        return datas
+    except Exception as e:
+        return {'messages': f"An error occurred while fetching: {e}"}
+    finally:
+        cursor.close()
+        connection.close()
+
+def DataBaseFetchin(state):
+    description=state['description']
+    section=state['section']
+    print(description,section)
+    if description!="None" and section!="None":
+        res=tool_calling_fun1(section)
+        print(res)
+        print("---------------------------------------------")
+        return {"under_section":res}
+    else:
+        return {"Please Metion Section Under which files are Organized"}
+
+def dataBaseFilesFetching(theme:str):
+    db = SQLDatabase.from_uri("postgresql+psycopg2://postgres:manu@localhost:5432/genedu")
+    print(db.dialect)
+    print(db.get_usable_table_names())
+def ResultCheck(state):
+    res=state['under_section']
+    my_data={}
+    for data in res:
+        description=data[-1]
+        structure=groq.with_structured_output(Binary_Score)
+        prompt=f"Analyze the user query and the project description. If they share relevant keywords, respond with 'yes'; otherwise, respond with 'no'. USER QUERY: {state['description']} DESCRIPTION: {description}"
+        out=structure.invoke(prompt)
+        if out.binary_score=="yes":
+            print("--------------------------------------Matching---------------------------------")
+            my_data[data[0]]=data[4]
+        print(description)
+    return {"final_res":my_data}    
+        
+def send_emails(state):
+    smtp_port,smtp_server,email_from, password=587,"smtp.gmail.com","manumanuvkm123@gmail.com","ouupizkcuioxqddf"
+    simple_email_context = ssl.create_default_context()
+    body = f"The Files are sended from {email_from} Through GenEdu"
+    msg = MIMEMultipart()
+    reciver=state['reciver']
+    files=state['final_path']
+    msg['From'] = email_from
+    msg['To'] = reciver
+    msg['Subject'] = "File Transfer Through GenEdu"
+
+    msg.attach(MIMEText(body, 'plain'))
+
+    # Attach multiple files
+    for file in files:
+        try:
+            with open(file, "rb") as attachment:
+                attachment_package = MIMEBase("application", "octet-stream")
+                attachment_package.set_payload(attachment.read())
+                encoders.encode_base64(attachment_package)
+                attachment_package.add_header("Content-Disposition", f"attachment; filename={file}")
+                msg.attach(attachment_package)
+        except Exception as e:
+            print(f"Error attaching file {file}: {e}")
+    text = msg.as_string()
+    try:
+        print("Connecting to server...")
+        tie_server = smtplib.SMTP(smtp_server, smtp_port)
+        tie_server.starttls(context=simple_email_context)
+        tie_server.login(email_from, password)
+        print("Sending email...")
+        tie_server.sendmail(email_from,reciver, text)
+        print("Email sent successfully!")
+    except Exception as e:
+        print(f"Error: {e}")
+        return {"messages":e}
+    finally:
+        tie_server.quit()
+    return {"final_res":"Email sent successfully!"}
+def router1(state):
+    lastmessage=state['final_res']
+    if len(lastmessage)>0:
+        return "yes"
+    else:
+        return "no"
+def EmailFor(state):
+    struct=groq.with_structured_output(EmailSender)
+    files=[]
+    result=struct.invoke("sender:manumanuvkm123@gmail.com other details:"+state["messages"][0].content)
+    for id,value in state['final_res'].items():
+        files.append(value)
+    return {"reciver":result.reciver,"final_path":files} 
+       
+###Graph
+@app.post("/emailautomation/")
+def Graph(query:Inference):
+    question=query.question
+    workflow=StateGraph(MyState)
+    workflow.add_node("format",FormatCall)
+    workflow.add_node("database",DataBaseFetchin)
+    workflow.add_node("Result_Check_By_Ai",ResultCheck)
+    workflow.add_node("Email_Format",EmailFor)
+    workflow.add_node("Email",send_emails)
+    workflow.add_edge(START,"format")
+    workflow.add_edge("format","database")
+    workflow.add_edge("database","Result_Check_By_Ai")
+    workflow.add_conditional_edges(
+            "Result_Check_By_Ai",
+            router1,
+            {'no':END,
+            'yes':'Email_Format'}
+    )
+    workflow.add_edge("Email_Format","Email")
+    workflow.add_edge("Email",END)
+    app1=workflow.compile()
+    res=app1.invoke({"messages":[question]})
+    print(res['final_res'])
+    if res['final_res']!='Email sent successfully!':
+        return {'result':"Email Sending error"}
+    return {"result":res['final_res']}
 if __name__ == '__main__':
     uvicorn.run(app, host='127.0.0.1', port=8001)
