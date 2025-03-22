@@ -588,5 +588,132 @@ def Graph(query:Inference):
         return {'result':"Email Sending error"}
     return {"result":res['final_res']}
 
+#######################################################Calender Automation######################################################
+
+
+from google.auth.transport.requests import Request
+from google.oauth2.credentials import Credentials
+from google_auth_oauthlib.flow import InstalledAppFlow
+from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
+from llama_index.llms.openrouter import OpenRouter
+from pydantic import BaseModel
+import os
+import json
+SCOPES = ["https://www.googleapis.com/auth/calendar"] 
+
+class Todo(BaseModel):
+    id: str
+    title: str
+    decs: str
+    completed: bool
+    createdAt: str
+    autherId: str
+
+def Format(input_text):
+    """Formats user input into a structured Google Calendar event JSON using OpenRouter API."""
+    llm = OpenRouter(
+        api_key="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",
+        model="openai/gpt-4o-2024-11-20",
+    )
+
+    prompt = f"""
+    You are a JSON formatting expert. Your task is to fill the following JSON structure based on the user input.
+
+    Example JSON structure:
+    {{
+        "summary": "Sample Event",
+        "location": "Virtual",
+        "description": "This is a test event.",
+        "start": {{
+            "dateTime": "2025-03-23T10:00:00Z",
+            "timeZone": "Asia/Kolkata"
+        }},
+        "end": {{
+            "dateTime": "2025-03-23T11:00:00Z",
+            "timeZone": "Asia/Kolkata"
+        }},
+        "attendees": [
+            {{"email": "example@example.com"}}
+        ],
+        "reminders": {{
+            "useDefault": true
+        }}
+    }}
+
+    USERINPUT: {input_text}
+
+    Fill in the JSON structure with the information provided in the USERINPUT. Only provide the filled JSON without any explanation or additional text.
+    """
+    data = llm.complete(prompt)
+    cleaned_output = data.text.strip()
+
+    if cleaned_output.startswith("```json"):
+        cleaned_output = cleaned_output[7:]  # Remove starting ```json
+    if cleaned_output.endswith("```"):
+        cleaned_output = cleaned_output[:-3]  # Remove ending ```
+
+    return cleaned_output
+
+def main(input_text):
+    """Authenticates and creates a Google Calendar event."""
+    creds = None
+    token_path = "token.json"
+    credentials_path = "C:/Users/Manu/Desktop/Tinkerhub/hackathon-mec/apps/python/credentials.json"
+
+    if os.path.exists(token_path):
+        creds = Credentials.from_authorized_user_file(token_path, SCOPES)
+
+    if not creds or not creds.valid:
+        if creds and creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+        else:
+            flow = InstalledAppFlow.from_client_secrets_file(credentials_path, SCOPES)
+            creds = flow.run_local_server(port=0)
+
+        with open(token_path, "w") as token:
+            token.write(creds.to_json())
+
+    try:
+        service = build('calendar', 'v3', credentials=creds)
+        event_data = json.loads(input_text)  # Convert formatted JSON string to dict
+
+        # Ensure end time exists
+        if "end" not in event_data:
+            start_time = event_data.get("start", {}).get("dateTime")
+            if start_time:
+                end_time = (datetime.fromisoformat(start_time[:-1]) + timedelta(hours=1)).isoformat() + "Z"
+                event_data["end"] = {"dateTime": end_time, "timeZone": "Asia/Kolkata"}
+
+        event = service.events().insert(calendarId='primary', body=event_data).execute()
+        print(f'Event created: {event.get("htmlLink")}')
+        return {"message": "Success", "eventLink": event.get("htmlLink")}
+    
+    except HttpError as error:
+        print(f"An error occurred: {error}")
+        return {"message": "Error creating event"}
+
+@app.post("/calender/")
+def TodoDetails(details: Todo):
+    """Receives event details, formats them, and creates a Google Calendar event."""
+    endtime = "1hr"  # Define event duration
+
+    input_text = f"""
+    Event Details:
+    ID: {details.id}
+    Title: {details.title}
+    Description: {details.decs}
+    Completed: {details.completed}
+    Created At: {details.createdAt}
+    EndTime: {endtime}
+    Author ID: {details.autherId}
+    """
+
+    formatted_event = Format(input_text)  # Generate formatted event JSON
+    print("Formatted Event JSON:", formatted_event)
+
+    res = main(formatted_event)  # Create Google Calendar event
+    return res
+
 if __name__ == '__main__':
     uvicorn.run(app, host='127.0.0.1', port=8001)

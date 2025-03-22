@@ -19,3 +19,6 @@ psycopg2
 langchain_core
 langchain_community
 rank_bm25
+
+crewai==0.30.11 
+crewai-tools==0.2.6
