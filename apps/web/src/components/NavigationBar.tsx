@@ -18,9 +18,6 @@ const NavigationBar = () => {
     const { user, isLoading, isError, error, invalidate } = useAuth();
     const { toast } = useToast();
 
-
-    console.log(user)
-
     const isActive = (path: string) => location.pathname === path;
 
     function handlelogout() {

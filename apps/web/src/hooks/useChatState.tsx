@@ -1,4 +1,3 @@
-
 import { pyServer } from "@/axios/axios.config";
 import { useState, useCallback } from "react";
 
@@ -7,6 +6,7 @@ export interface ChatMessage {
     content: string;
     sender: "user" | "ai";
     timestamp: Date;
+    isYtEnabled?: boolean; // Optional field for YouTube toggle state
 }
 
 export interface ChatSession {
@@ -25,7 +25,7 @@ export const useChatState = () => {
             id: "1",
             title: "Research Paper Help",
             lastMessage: "Can you help me with my research paper?",
-            timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 hours ago
+            timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2),
             messages: [
                 {
                     id: "msg1",
@@ -68,31 +68,40 @@ export const useChatState = () => {
         return chatSessions.find(session => session.id === activeChatId) || null;
     }, [activeChatId, chatSessions]);
 
-    const sendMessage = useCallback(async (content: string) => {
+    const sendMessage = useCallback(async (content: string, isYtEnabled: boolean) => {
         if (!content.trim()) return;
+        const chatid = activeChatId || Date.now().toString();
 
-        let resp = await pyServer.post("/chatllm/", {
-            question: content.trim()
-        })
+        let resp
+        if (!isYtEnabled) {
+            resp = await pyServer.post("/chatllm/", {
+                question: content.trim(),
+                session_id: chatid,
+            });
 
+        } else {
+            resp = await pyServer.post("/youtubesummerization/", {
+                link: content.trim(),
+            });
+        }
         const newMessage: ChatMessage = {
             id: Date.now().toString(),
             content,
             sender: "user",
             timestamp: new Date(),
+            isYtEnabled,
         };
 
         const aiResponse: ChatMessage = {
             id: (Date.now() + 1).toString(),
-            content:  resp.data.result,
+            content: resp.data.result,
             sender: "ai",
             timestamp: new Date(Date.now() + 1000),
         };
 
         if (!activeChatId) {
-            // Create new chat session
             const newSession: ChatSession = {
-                id: Date.now().toString(),
+                id: chatid,
                 title: content.slice(0, 30) + (content.length > 30 ? "..." : ""),
                 lastMessage: content,
                 timestamp: new Date(),
@@ -100,7 +109,7 @@ export const useChatState = () => {
             };
 
             setChatSessions(prev => [newSession, ...prev]);
-            setActiveChatId(newSession.id);
+            setActiveChatId(chatid);
         } else {
             // Update existing chat session
             setChatSessions(prev =>
