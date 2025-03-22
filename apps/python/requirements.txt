@@ -13,3 +13,5 @@ yt_dlp
 langchain_core
 langchain_cohere
 langchain_together
+langgraph
+email
