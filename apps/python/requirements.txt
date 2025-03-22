@@ -15,6 +15,5 @@ langchain_cohere
 langchain_together
 langgraph
 psycopg2
-
 langchain_core
 langchain_community
