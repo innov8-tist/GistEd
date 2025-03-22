@@ -1,0 +1,18 @@
+.board-container {
+    background-color: white;
+    font-family: Arial, sans-serif;
+    padding: 20px;
+  }
+  
+  /* Prevent Tailwind from affecting the drawing area */
+  .tldraw-wrapper {
+    all: unset !important;
+    width: 100%;
+    height: 90vh;
+  }
+  
+  /* Ensure tldraw is properly displayed */
+  .tldraw-wrapper canvas {
+    all: initial !important;
+  }
+  

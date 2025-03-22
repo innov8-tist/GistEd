@@ -1,18 +1,18 @@
-
 import React from "react";
+import { Tldraw } from "@tldraw/tldraw";
+import "@tldraw/tldraw/tldraw.css";
 import NavigationBar from "@/components/NavigationBar";
 
-const Board = () => {
+const Board: React.FC = () => {
   return (
-    <div className="min-h-screen bg-white">
+    <div className="flex flex-col h-screen">
+      {/* Fixed Navigation Bar */}
       <NavigationBar />
-      
-      <div className="w-full px-4">
-        <div className="glass rounded-lg p-6 flex items-center justify-center" style={{ height: "calc(100vh - 8rem)" }}>
-          <div className="text-center">
-            <h2 className="text-2xl font-medium text-gray-800 mb-2">Board Section</h2>
-            <p className="text-gray-500">This section is under development.</p>
-          </div>
+
+      {/* Centered Board */}
+      <div className="flex-grow flex justify-center items-center">
+        <div className="w-[95vw] h-[85vh]">
+          <Tldraw persistenceKey="my-drawing-board" />
         </div>
       </div>
     </div>
