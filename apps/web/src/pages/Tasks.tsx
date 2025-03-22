@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import NavigationBar from "@/components/NavigationBar";
 import { TaskBoard, AddTaskButton } from "@/components/TaskBoard";
@@ -78,62 +77,68 @@ const Tasks = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [newTaskStatus, setNewTaskStatus] = useState<Task["status"]>("todo");
 
+  // Organize tasks into columns based on their status
   const columns = [
     {
       id: "col1",
       title: "To Do",
       status: "todo" as const,
-      tasks: tasks.filter(task => task.status === "todo"),
+      tasks: tasks.filter((task) => task.status === "todo"),
     },
     {
       id: "col2",
       title: "In Progress",
       status: "in-progress" as const,
-      tasks: tasks.filter(task => task.status === "in-progress"),
+      tasks: tasks.filter((task) => task.status === "in-progress"),
     },
     {
       id: "col3",
       title: "Review",
       status: "review" as const,
-      tasks: tasks.filter(task => task.status === "review"),
+      tasks: tasks.filter((task) => task.status === "review"),
     },
     {
       id: "col4",
       title: "Done",
       status: "done" as const,
-      tasks: tasks.filter(task => task.status === "done"),
+      tasks: tasks.filter((task) => task.status === "done"),
     },
   ];
 
+  // Handle drag start event
   const handleDragStart = (e: React.DragEvent, taskId: string, status: Task["status"]) => {
     setDraggedTaskId(taskId);
     setSourceStatus(status);
   };
 
+  // Handle drag over event
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
   };
 
+  // Handle drop event
   const handleDrop = (e: React.DragEvent, targetStatus: Task["status"]) => {
     e.preventDefault();
-    
+
     if (draggedTaskId && sourceStatus && sourceStatus !== targetStatus) {
-      setTasks(prevTasks =>
-        prevTasks.map(task =>
+      setTasks((prevTasks) =>
+        prevTasks.map((task) =>
           task.id === draggedTaskId ? { ...task, status: targetStatus } : task
         )
       );
     }
-    
+
     setDraggedTaskId(null);
     setSourceStatus(null);
   };
 
+  // Open the "Add Task" dialog
   const handleOpenAddTaskDialog = (status: Task["status"]) => {
     setNewTaskStatus(status);
     setDialogOpen(true);
   };
 
+  // Add a new task
   const handleAddTask = (taskData: {
     title: string;
     description?: string;
@@ -141,26 +146,28 @@ const Tasks = () => {
     status: Task["status"];
   }) => {
     const newTask: Task = {
-      id: `task${tasks.length + 1}`,
+      id: `task${tasks.length + 1}`, // Generate a unique ID
       title: taskData.title,
       description: taskData.description,
       status: taskData.status,
       dueDate: taskData.dueDate,
-      priority: "medium",
-      labels: ["New"],
+      priority: "medium", // Default priority
+      labels: ["New"], // Default label
     };
-    
-    setTasks(prevTasks => [...prevTasks, newTask]);
+
+    setTasks((prevTasks) => [...prevTasks, newTask]);
+    setDialogOpen(false); // Close the dialog after adding the task
   };
 
   return (
     <div className="min-h-screen bg-white">
       <NavigationBar />
-      
+
       <div className="w-full px-4">
         <div className="glass rounded-lg p-6 relative">
           <h2 className="text-xl font-medium text-gray-800 mb-4">Task Board</h2>
-          
+
+          {/* Task Board Component */}
           <TaskBoard
             columns={columns}
             onAddTask={handleOpenAddTaskDialog}
@@ -168,9 +175,11 @@ const Tasks = () => {
             onDragOver={handleDragOver}
             onDrop={handleDrop}
           />
-          
+
+          {/* Add Task Button */}
           <AddTaskButton onClick={() => handleOpenAddTaskDialog("todo")} />
-          
+
+          {/* Add Task Dialog */}
           <AddTaskDialog
             open={dialogOpen}
             onOpenChange={setDialogOpen}
