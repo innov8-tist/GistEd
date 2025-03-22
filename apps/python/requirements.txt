@@ -1,9 +1,7 @@
 fastapi==0.115.6
-pydantic==2.1.0
+pydantic==2.10.6
 uvicorn==0.22.0
 pandas==2.2.3
-re
-ast
 langchain==0.3.14
 langchain-google-genai==2.0.0
 langchain-experimental==0.3.2
@@ -11,3 +9,4 @@ llama-index==0.12.5
 llama-index-llms-openrouter==0.3.1
 llama-index-experimental==0.5.2
 langchain-groq==0.2.1
+langchain_together
