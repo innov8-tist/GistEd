@@ -1,6 +1,5 @@
-
 import React, { useRef, useEffect } from "react";
-import { Send, Plus, Paperclip } from "lucide-react";
+import { Send, Plus, Paperclip, Youtube } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ChatMessage, ChatSession } from "@/hooks/useChatState";
 
@@ -18,17 +17,17 @@ export const ChatHistory: React.FC<ChatHistoryProps> = ({
   onNewChat,
 }) => {
   return (
-    <div className="bg-gray-50 rounded-lg p-4 h-[calc(100vh-10rem)] overflow-y-auto animate-fade-in">
+    <div className="w-full bg-gray-50 rounded-lg p-4 h-[calc(100vh-10rem)] overflow-y-auto">
       <button 
         onClick={onNewChat}
-        className="w-full mb-4 flex items-center justify-center space-x-2 bg-white py-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+        className="w-full mb-4 flex items-center justify-center space-x-2 bg-white py-3 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors"
       >
         <Plus size={16} />
         <span>New Chat</span>
       </button>
-      
+
+      <h3 className="text-sm font-medium text-gray-500 mb-2">Recent Chats</h3>
       <div className="space-y-2">
-        <h3 className="text-sm font-medium text-gray-500 mb-2">Recent Chats</h3>
         {sessions.map((session) => (
           <button
             key={session.id}
@@ -60,29 +59,27 @@ export const ChatMessageList: React.FC<ChatMessageListProps> = ({ messages }) =>
     endOfMessagesRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  if (!messages || messages.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center h-[calc(100vh-16rem)]">
-        <h3 className="text-2xl font-medium text-gray-500 mb-2">EduSpark AI Assistant</h3>
-        <p className="text-gray-400 max-w-md text-center">
-          Ask me anything about your studies, research papers, or learning materials.
-        </p>
-      </div>
-    );
-  }
-
   return (
-    <div className="px-4 py-6 overflow-y-auto h-[calc(100vh-16rem)]">
-      {messages.map((message) => (
-        <div
-          key={message.id}
-          className={`chat-bubble ${
-            message.sender === "user" ? "chat-bubble-user" : "chat-bubble-ai"
-          } ${message.sender === "user" ? "ml-auto" : "mr-auto"} mb-3`}
-        >
-          {message.content}
+    <div className="flex flex-col flex-grow h-[calc(100vh-16rem)] overflow-auto px-4 py-6 w-full">
+      {messages && messages.length > 0 ? (
+        messages.map((message) => (
+          <div
+            key={message.id}
+            className={`chat-bubble ${
+              message.sender === "user" ? "chat-bubble-user" : "chat-bubble-ai"
+            } ${message.sender === "user" ? "ml-auto" : "mr-auto"} mb-3 max-w-[80%] break-words`}
+          >
+            {message.content}
+          </div>
+        ))
+      ) : (
+        <div className="flex flex-col items-center justify-center h-full">
+          <h3 className="text-2xl font-medium text-gray-500 mb-2">EduSpark AI Assistant</h3>
+          <p className="text-gray-400 max-w-md text-center">
+            Ask me anything about your studies, research papers, or learning materials.
+          </p>
         </div>
-      ))}
+      )}
       <div ref={endOfMessagesRef} />
     </div>
   );
@@ -93,7 +90,6 @@ interface ChatInputProps {
   onChange: (value: string) => void;
   onSend: () => void;
 }
-
 export const ChatInput: React.FC<ChatInputProps> = ({ value, onChange, onSend }) => {
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -103,21 +99,26 @@ export const ChatInput: React.FC<ChatInputProps> = ({ value, onChange, onSend })
   };
 
   return (
-    <div className="bg-white border-t border-gray-100 p-4 animate-slide-up">
-      <div className="relative flex items-center max-w-3xl mx-auto">
+    <div className="bg-white border-t border-gray-100 p-4 w-full">
+      <div className="relative flex items-center w-full mx-auto">
         <button className="absolute left-3 text-gray-400 hover:text-gray-600 transition-colors">
           <Paperclip size={18} />
         </button>
-        
-        <input
-          type="text"
+
+        <button className="absolute left-10 text-gray-400 hover:text-gray-600 transition-colors">
+          <Youtube size={18} />
+        </button>
+
+        <textarea
           value={value}
           onChange={(e) => onChange(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="Ask me anything..."
-          className="chat-input pl-10 pr-12"
+          rows={1}
+          className="chat-input pl-16 pr-12 resize-none overflow-hidden w-full"
+          style={{ minHeight: "40px", maxHeight: "120px" }}
         />
-        
+
         <button
           onClick={onSend}
           disabled={!value.trim()}
@@ -127,6 +128,20 @@ export const ChatInput: React.FC<ChatInputProps> = ({ value, onChange, onSend })
         >
           <Send size={18} />
         </button>
+      </div>
+    </div>
+  );
+};
+
+export const ChatContainer: React.FC = () => {
+  return (
+    <div className="flex w-full h-screen">
+      <div className="w-1/4">
+        <ChatHistory sessions={[]} activeChatId={null} onSelectSession={() => {}} onNewChat={() => {}} />
+      </div>
+      <div className="flex flex-col w-3/4">
+        <ChatMessageList messages={[]} />
+        <ChatInput value="" onChange={() => {}} onSend={() => {}} />
       </div>
     </div>
   );

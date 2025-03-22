@@ -1,6 +1,5 @@
-
 import React from "react";
-import { Plus, FileText, Folder, ChevronRight, Search, Send } from "lucide-react";
+import { Plus, FileText, Folder, ChevronRight, Search, Send, Youtube } from "lucide-react";
 
 interface Section {
   id: string;
@@ -60,9 +59,7 @@ export const DocumentSections: React.FC<DocumentSectionProps> = ({
               </div>
               <ChevronRight
                 size={18}
-                className={`text-gray-400 transition-transform ${
-                  section.isExpanded ? "transform rotate-90" : ""
-                }`}
+                className={`text-gray-400 transition-transform ${section.isExpanded ? "rotate-90" : ""}`}
               />
             </button>
             
@@ -90,19 +87,26 @@ export const DocumentChatInput = () => {
   return (
     <div className="bg-gray-100 p-4 rounded-lg mt-4">
       <div className="relative flex items-center">
+        {/* FileText Icon */}
         <button className="absolute left-3 p-1.5 rounded-full bg-gray-200 text-gray-600">
           <FileText size={16} />
         </button>
-        
-        <input
-          type="text"
+
+        {/* Youtube Icon */}
+        <button className="absolute left-12 p-1.5 hover:text-gray-600 transition-colors rounded-full bg-gray-200 text-gray-600">
+          <Youtube size={18} />
+        </button>
+
+        {/* Textarea for auto-wrapping */}
+        <textarea
           placeholder="Ask about this document..."
-          className="chat-input pl-12"
+          rows={1}
+          className="chat-input pl-20 pr-12 resize-none overflow-hidden"
+          style={{ minHeight: "40px", maxHeight: "120px" }}
         />
-        
-        <button
-          className="absolute right-3 p-1.5 rounded-full bg-blue-500 text-white"
-        >
+
+        {/* Send Button */}
+        <button className="absolute right-3 p-1.5 rounded-full bg-blue-500 text-white">
           <Send size={16} />
         </button>
       </div>
