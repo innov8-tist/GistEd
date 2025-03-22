@@ -202,13 +202,40 @@ tool4=Tool(
 
 class Infrerence(BaseModel):
     question:str
+    
+
+from langchain_core.chat_history import BaseChatMessageHistory
+from langchain_core.runnables.history import RunnableWithMessageHistory
+from langchain_community.chat_message_histories import ChatMessageHistory
+from langchain.prompts import ChatPromptTemplate,MessagesPlaceholder
+store = {}
+def get_session_history(session_id: str) -> BaseChatMessageHistory:
+    if session_id not in store:
+        store[session_id] = ChatMessageHistory()
+    return store[session_id]
+config={"configurable": {"session_id": "first_chat"}}
+
 @app.post("/chatllm/")
 def llmInfer(query:Infrerence):
     if groq is None:
         return {"message": "LLM Not init"}
     try:
-         result=groq.invoke(query.question)
-         return {"result":result.content}
+        prompt=ChatPromptTemplate.from_messages(
+            [
+            ("system","you should give answer based on the question"),
+            MessagesPlaceholder(variable_name="chat_history"),
+            ("human","{input}")
+            ]
+        )
+        chain= prompt|groq
+        with_message_history = RunnableWithMessageHistory(
+        chain,
+        get_session_history,
+        input_messages_key="input",
+        history_messages_key="chat_history",
+        )
+        result=with_message_history.invoke({"input":query.question},config=config)
+        return {"result":result.content}
     except Exception as e:
         return {"messages": f"An error occurred during inference: {str(e)}"}
 
@@ -560,5 +587,6 @@ def Graph(query:Inference):
     if res['final_res']!='Email sent successfully!':
         return {'result':"Email Sending error"}
     return {"result":res['final_res']}
+
 if __name__ == '__main__':
     uvicorn.run(app, host='127.0.0.1', port=8001)
