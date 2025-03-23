@@ -497,7 +497,8 @@ def ResultCheck(state):
     res=state['under_section']
     my_data={}
     for data in res:
-        description=data[4]
+        description=data[5]
+        print("---------------------------description-------------------------------")
         structure=groq.with_structured_output(Binary_Score)
         prompt=f"Analyze the user query and the project description. If they share relevant keywords, respond with 'yes'; otherwise, respond with 'no'. USER QUERY: {state['description']} DESCRIPTION: {description}"
         out=structure.invoke(prompt)
