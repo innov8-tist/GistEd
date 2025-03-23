@@ -23,6 +23,7 @@ app.use(
 );
 
 app.use(cookieparser());
+app.use(express.json());
 app.use(
   session({
     secret: process.env.SESSION_SECRET || 'hello',

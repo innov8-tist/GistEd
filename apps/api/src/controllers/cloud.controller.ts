@@ -11,19 +11,16 @@ export async function uploadFileController(req: Request, res: Response, next: Ne
         const fileData = {
             section: req.body.section,
             filetype: req.body.filetype,
-            title: req.file?.originalname,
+            title: req.body.title,
             description: req.body.description,
             fileSize: req.file?.size,
             path: req.file?.path,
-            dname:req.body.title,
             author: req.user?.id,
             id: v4()
         };
 
         const result = createCloudFileSchema.safeParse(fileData);
         if (!result.success) {
-            console.log(fileData)
-            console.log(result.error)
             return next(result.error);
         }
 
@@ -40,6 +37,7 @@ export async function uploadFileController(req: Request, res: Response, next: Ne
 
 export async function saveFileMetadataController(req: Request, res: Response, next: NextFunction) {
     try {
+        console.log("Req recieved",req.body)
         const fileData = {
             section: req.body.section,
             filetype: req.body.filetype,
@@ -48,12 +46,14 @@ export async function saveFileMetadataController(req: Request, res: Response, ne
             fileSize: req.body.fileSize,
             path: req.body.title,
             author: req.user?.id,
+            dname:req.body.title,
             id: v4()
         };
         console.log(fileData)
 
         const result = createCloudFileSchema.safeParse(fileData);
         if (!result.success) {
+            console.log(result.error)
             return next(result.error);
         }
 
