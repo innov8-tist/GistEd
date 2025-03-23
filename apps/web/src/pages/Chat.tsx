@@ -1,7 +1,8 @@
+
 import NavigationBar from "@/components/NavigationBar";
 import { ChatHistory, ChatMessageList, ChatInput } from "@/components/ChatInterface";
 import { useChatState } from "@/hooks/useChatState";
-
+import LanguageSelector from "@/components/LanguageSelector";
 
 const Chat = () => {
   const {
@@ -13,18 +14,16 @@ const Chat = () => {
     sendMessage,
     startNewChat,
     selectChatSession,
-    isThinking,
   } = useChatState();
 
   const activeChat = getActiveChat();
 
   const handleSendMessage = (isYtEnabled: boolean) => {
     if (inputValue.trim()) {
-      sendMessage(inputValue, isYtEnabled);
-      setInputValue(""); // Clear input after sending
+      sendMessage(inputValue, isYtEnabled); // Pass the YouTube toggle state
     }
   };
-
+  
   return (
     <div className="min-h-screen bg-white p-0">
       <NavigationBar />
@@ -40,9 +39,14 @@ const Chat = () => {
             />
           </div>
           
-          <div className="w-3/4 flex flex-col glass rounded-lg overflow-hidden">
+          <div className="w-3/4 flex flex-col glass rounded-lg overflow-hidden relative">
+            {/* Language selector positioned in the top-right corner */}
+            <div className="absolute top-3 right-3 z-10">
+              <LanguageSelector onChange={(lang) => console.log(`Language changed to: ${lang}`)} />
+            </div>
+            
             <div className="flex-1 overflow-hidden">
-              <ChatMessageList messages={activeChat?.messages} isThinking={isThinking} />
+              <ChatMessageList messages={activeChat?.messages} />
             </div>
             
             <ChatInput
@@ -56,6 +60,5 @@ const Chat = () => {
     </div>
   );
 };
-
 
 export default Chat;
