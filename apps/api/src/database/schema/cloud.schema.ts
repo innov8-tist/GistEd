@@ -6,6 +6,7 @@ export const cloudTable = pgTable('cloud', {
     section: text('section').notNull(),
     filetype: text('filetype').notNull(),
     title: text('title').notNull(),
+    dname: text('dname').notNull(),
     description: text('description'),
     createdAt: timestamp('createdAt').defaultNow().notNull(),
     fileSize: integer('fileSize').notNull(),

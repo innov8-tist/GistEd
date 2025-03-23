@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { MessageSquare, FileText, Library, CheckSquare, Layout, Settings, LogOut } from 'lucide-react';
+import { MessageSquare, FileText, Library, CheckSquare,Image, Layout, Settings, LogOut } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { logoutUser } from "../apis/auth"
 import {
@@ -63,6 +63,15 @@ const NavigationBar = () => {
                             <Icon size={18} />
                             <span className="hidden sm:inline">{label}</span>
                         </Link>
+
+          <Link 
+            to="/image" 
+            className={`nav-link flex items-center space-x-2 ${isActive('/board') ? 'nav-link-active' : ''}`}
+          >
+            <Image size={18} className={isActive('/image') ? 'text-blue-600' : 'text-gray-600'} />
+            <span>Image</span>
+          </Link>
+
                     ))}
                 </div>
 

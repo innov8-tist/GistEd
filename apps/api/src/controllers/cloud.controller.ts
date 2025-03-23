@@ -1,7 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
+import fs from 'fs'
+import path from 'path';
 import { CustomError } from '$/classes/CustomError.class';
 import { createCloudFile, getCloudFileById, listCloudFilesByAuthor } from '../services/cloud.service';
-import {listCloudFilesByAuthorSchema,createCloudFileSchema,getCloudFileByIdSchema} from "$/zod-request-schema/cloud-req.zod"
+import { listCloudFilesByAuthorSchema, createCloudFileSchema, getCloudFileByIdSchema } from "$/zod-request-schema/cloud-req.zod"
 import { v4 } from 'uuid';
 
 export async function uploadFileController(req: Request, res: Response, next: NextFunction) {
@@ -9,27 +11,29 @@ export async function uploadFileController(req: Request, res: Response, next: Ne
         const fileData = {
             section: req.body.section,
             filetype: req.body.filetype,
-            title: req.body.title,
+            title: req.file?.originalname,
             description: req.body.description,
             fileSize: req.file?.size,
             path: req.file?.path,
+            dname:req.body.title,
             author: req.user?.id,
             id: v4()
         };
 
         const result = createCloudFileSchema.safeParse(fileData);
         if (!result.success) {
+            console.log(fileData)
+            console.log(result.error)
             return next(result.error);
         }
 
         const newFile = await createCloudFile(result.data);
-
         if (!newFile) {
             throw new CustomError(500, 'Failed to create cloud file');
         }
-
         res.status(201).json(newFile);
     } catch (error) {
+        console.log(error);
         next(error);
     }
 }
@@ -94,4 +98,30 @@ export async function listCloudFilesByAuthorController(req: Request, res: Respon
     const files = await listCloudFilesByAuthor(authorId);
     res.status(200).json(files);
 }
+
+export const DownloadFileController = async (req: Request, res: Response) => {
+    let { id } = req.params;
+    id = id?.toString()
+    if (!id) {
+        throw new Error("Invalid id")
+    }
+    try {
+        const filePath = path.join(__dirname, './../../../cloud/', id);
+        console.log(filePath)
+        if (!fs.existsSync(filePath)) {
+            return res.status(404).json({ message: 'File not found' });
+        }
+
+        res.setHeader('Content-Disposition', `attachment; filename=${id}`);
+        res.setHeader('Content-Type', 'application/octet-stream');
+
+        const fileStream = fs.createReadStream(filePath);
+        fileStream.pipe(res);
+    } catch (error) {
+        console.error('Error downloading file:', error);
+        res.status(500).json({ message: 'Failed to download file' });
+    }
+};
+
+
 
