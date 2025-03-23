@@ -1,13 +1,13 @@
 import React, { useState } from "react";
 import { saveAs } from 'file-saver';
-import { Plus, FileText, Folder, ChevronRight, Search, Send, Youtube } from "lucide-react";
+import { Plus, FileText, Folder, ChevronRight, Search, Send, Youtube, Loader } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select"
 import { Input } from "../components/ui/input"
 import { Button } from "../components/ui/button"
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea"
-import instance from "@/axios/axios.config"
+import instance, { pyServer } from "@/axios/axios.config"
 import { useToast } from "@/hooks/use-toast"
 
 interface Section {
@@ -23,7 +23,7 @@ export interface CustomFile {
     type: "pdf" | "doc" | "txt";
     dateModified: Date;
     path: string,
-    dname:string
+    dname: string
 }
 
 interface DocumentSectionProps {
@@ -252,30 +252,112 @@ export const DocumentSections: React.FC<DocumentSectionProps> = ({
     );
 };
 
+
 export const DocumentChatInput = () => {
+    const [isFileTextEnabled, setIsFileTextEnabled] = useState(false);
+    const [isYoutubeEnabled, setIsYoutubeEnabled] = useState(false);
+    const [inputValue, setInputValue] = useState('');
+    const [isThinking, setIsThinking] = useState(false);
+    const { toast } = useToast()
+
+    const handleFileTextClick = () => {
+        setIsFileTextEnabled(true);
+        setIsYoutubeEnabled(false);
+    };
+
+    const handleYoutubeClick = () => {
+        setIsYoutubeEnabled(true);
+        setIsFileTextEnabled(false);
+    };
+
+    const handleSendClick = async () => {
+        setIsThinking(true);
+
+        if (isFileTextEnabled) {
+            await callFileTextAPI(inputValue);
+        } else if (isYoutubeEnabled) {
+            await callYoutubeAPI(inputValue);
+        }
+
+        setIsThinking(false);
+        setInputValue('');
+    };
+
+    const callFileTextAPI = async (message: string) => {
+        let response = await pyServer.post('/emailautomation/', {
+            question: message
+        })
+        if (response.status === 200) {
+            toast({
+                title: "Email sent successfully"
+            })
+        }
+        console.log(response)
+    };
+
+    const callYoutubeAPI = async (message: string) => {
+        let response = await pyServer.post('/extractionyoutube', {
+            question: message
+        })
+
+        let st = await uploadFileToCloud({
+            title: response.data.title,
+            path: response.data.title,
+            section: "Youtube",
+            filetype: "mp4",
+            fileSize: 2000
+        })
+        if (st.status == 201) {
+            toast({
+                title: "Youtube Segment Download Success"
+            })
+        };
+    }
+
+    async function uploadFileToCloud(body: any) {
+        const data = await instance.post('/cloud/new', body);
+        return data;
+    }
+
     return (
         <div className="bg-gray-100 p-4 rounded-lg mt-4">
             <div className="relative flex items-center">
-                <button className="absolute left-3 p-1.5 rounded-full bg-gray-200 text-gray-600">
+                <button
+                    onClick={handleFileTextClick}
+                    className={`absolute left-3 p-1.5 rounded-full ${isFileTextEnabled ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-600'}`}
+                >
                     <FileText size={16} />
                 </button>
 
-                <button className="absolute left-12 p-1.5 hover:text-gray-600 transition-colors rounded-full bg-gray-200 text-gray-600">
+                <button
+                    onClick={handleYoutubeClick}
+                    className={`absolute left-12 p-1.5 rounded-full ${isYoutubeEnabled ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-600'}`}
+                >
                     <Youtube size={18} />
                 </button>
 
-                {/* Textarea for auto-wrapping */}
                 <textarea
                     placeholder="Ask about this document..."
                     rows={1}
                     className="chat-input pl-20 pr-12 resize-none overflow-hidden"
                     style={{ minHeight: "40px", maxHeight: "120px" }}
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
                 />
 
-                {/* Send Button */}
-                <button className="absolute right-3 p-1.5 rounded-full bg-blue-500 text-white">
-                    <Send size={16} />
-                </button>
+                {isThinking ? (
+                    <div className="absolute right-3 p-1.5">
+                        <Loader size={16} className="animate-spin" />
+                    </div>
+                ) : (
+                    <button
+                        onClick={handleSendClick}
+                        className="absolute right-3 p-1.5 rounded-full bg-blue-500 text-white"
+                        disabled={!inputValue.trim() || (!isFileTextEnabled && !isYoutubeEnabled)}
+                    >
+                        <Send size={16} />
+                    </button>
+                )}
             </div>
         </div>
     );

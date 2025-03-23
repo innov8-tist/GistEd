@@ -19,5 +19,4 @@ psycopg2
 langchain_core
 langchain_community
 rank_bm25
-
 google_auth_oauthlib

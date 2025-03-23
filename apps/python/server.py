@@ -451,11 +451,11 @@ import psycopg2
 
 def tool_calling_fun1(section):
     connection = psycopg2.connect(
-        dbname="genedu",
+        dbname="starter",
         user="postgres",
-        password="manu",
+        password="password",
         host="localhost",
-        port=5432
+        port=5433
     )
 
     try:
