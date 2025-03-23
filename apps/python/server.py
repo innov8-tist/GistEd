@@ -714,6 +714,70 @@ def TodoDetails(details: Todo):
 
     res = main(formatted_event)  # Create Google Calendar event
     return res
+from together import Together
+from fastapi import UploadFile,File
+import base64
+client = Together(api_key="5081cda228b7435ec59fb6a8ca3c40044d4b3a6c3941aa7e479add4fdd489984")
+@app.post("/upload-image/")
+async def upload_image(file: UploadFile = File(...)):
+    # Read uploaded file contents
+    contents = await file.read()
+
+    # Convert the image bytes to base64
+    base64_image = base64.b64encode(contents).decode('utf-8')
+
+    # Define the prompt for text extraction
+    getDescriptionPrompt = "Extract the text from the image."
+
+    # Call Together AI with the Vision model
+    stream = client.chat.completions.create(
+        model="meta-llama/Llama-3.2-11B-Vision-Instruct-Turbo",
+        messages=[
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": getDescriptionPrompt},
+                    {
+                        "type": "image_url",
+                        "image_url": {
+                            "url": f"data:image/jpeg;base64,{base64_image}",
+                        },
+                    },
+                ],
+            }
+        ],
+        stream=True,  # Streaming response
+    )
+
+    extracted_text = ""
+    for chunk in stream:
+        print(chunk.choices[0].delta.content or "" if chunk.choices else "", end="", flush=True)
+        if chunk.choices:
+            extracted_text += chunk.choices[0].delta.content or ""
+    
+    #### calling telegram api#############
+    BOT_TOKEN = "7652437048:AAHenXqGJzQDBJF6GaFFz3vxhQlewhdxDcI"
+    CHAT_ID = "5099445349"
+
+    # Send a message
+    message_url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
+    message_payload = {"chat_id": CHAT_ID, "text": extracted_text}
+    requests.post(message_url, data=message_payload)
+
+    # Send a file
+    file_url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendDocument"
+    file_payload = {"chat_id": CHAT_ID, "caption": "Here is your file!"}
+    file_data = {"document": open("file.pdf", "rb")}
+    requests.post(file_url, data=file_payload, files=file_data)
+    return {"extracted_text": "Note Send SucessFully"}
+
+
+
+
+
+
+
+
 
 if __name__ == '__main__':
     uvicorn.run(app, host='127.0.0.1', port=8001)
