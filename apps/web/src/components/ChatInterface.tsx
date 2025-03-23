@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Paperclip, Youtube, Mic, Plus } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import ReactMarkdown from "react-markdown"
 
 // Define types for ChatMessage and ChatSession
 interface ChatMessage {
