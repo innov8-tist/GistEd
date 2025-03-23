@@ -63,6 +63,8 @@ export const useChatState = () => {
         },
     ]);
 
+    const [isThinking, setIsThinking] = useState(false); // Thinking state
+
     const getActiveChat = useCallback(() => {
         if (!activeChatId) return null;
         return chatSessions.find(session => session.id === activeChatId) || null;
@@ -70,20 +72,10 @@ export const useChatState = () => {
 
     const sendMessage = useCallback(async (content: string, isYtEnabled: boolean) => {
         if (!content.trim()) return;
+
         const chatid = activeChatId || Date.now().toString();
 
-        let resp
-        if (!isYtEnabled) {
-            resp = await pyServer.post("/chatllm/", {
-                question: content.trim(),
-                session_id: chatid,
-            });
-
-        } else {
-            resp = await pyServer.post("/youtubesummerization/", {
-                link: content.trim(),
-            });
-        }
+        // Add user message instantly
         const newMessage: ChatMessage = {
             id: Date.now().toString(),
             content,
@@ -92,26 +84,19 @@ export const useChatState = () => {
             isYtEnabled,
         };
 
-        const aiResponse: ChatMessage = {
-            id: (Date.now() + 1).toString(),
-            content: resp.data.result,
-            sender: "ai",
-            timestamp: new Date(Date.now() + 1000),
-        };
-
+        // Update chat sessions with the user's message
         if (!activeChatId) {
             const newSession: ChatSession = {
                 id: chatid,
                 title: content.slice(0, 30) + (content.length > 30 ? "..." : ""),
                 lastMessage: content,
                 timestamp: new Date(),
-                messages: [newMessage, aiResponse],
+                messages: [newMessage],
             };
 
             setChatSessions(prev => [newSession, ...prev]);
             setActiveChatId(chatid);
         } else {
-            // Update existing chat session
             setChatSessions(prev =>
                 prev.map(session => {
                     if (session.id === activeChatId) {
@@ -119,7 +104,7 @@ export const useChatState = () => {
                             ...session,
                             lastMessage: content,
                             timestamp: new Date(),
-                            messages: [...session.messages, newMessage, aiResponse],
+                            messages: [...session.messages, newMessage],
                         };
                     }
                     return session;
@@ -127,7 +112,69 @@ export const useChatState = () => {
             );
         }
 
-        setInputValue("");
+        setInputValue(""); // Clear input
+        setIsThinking(true); // Show thinking state
+
+        try {
+            let resp;
+            if (!isYtEnabled) {
+                resp = await pyServer.post("/chatllm/", {
+                    question: content.trim(),
+                    session_id: chatid,
+                });
+            } else {
+                resp = await pyServer.post("/youtubesummerization/", {
+                    link: content.trim(),
+                });
+            }
+
+            // Add AI response to the chat
+            const aiResponse: ChatMessage = {
+                id: (Date.now() + 1).toString(),
+                content: resp.data.result,
+                sender: "ai",
+                timestamp: new Date(),
+            };
+
+            setChatSessions(prev =>
+                prev.map(session => {
+                    if (session.id === chatid) {
+                        return {
+                            ...session,
+                            lastMessage: aiResponse.content,
+                            timestamp: new Date(),
+                            messages: [...session.messages, aiResponse],
+                        };
+                    }
+                    return session;
+                })
+            );
+        } catch (error) {
+            console.error("Error sending message:", error);
+            // Optionally, add an error message to the chat
+            const errorMessage: ChatMessage = {
+                id: (Date.now() + 1).toString(),
+                content: "Failed to get a response. Please try again.",
+                sender: "ai",
+                timestamp: new Date(),
+            };
+
+            setChatSessions(prev =>
+                prev.map(session => {
+                    if (session.id === chatid) {
+                        return {
+                            ...session,
+                            lastMessage: errorMessage.content,
+                            timestamp: new Date(),
+                            messages: [...session.messages, errorMessage],
+                        };
+                    }
+                    return session;
+                })
+            );
+        } finally {
+            setIsThinking(false); // Hide thinking state
+        }
     }, [activeChatId, setInputValue]);
 
     const startNewChat = useCallback(() => {
@@ -148,5 +195,6 @@ export const useChatState = () => {
         sendMessage,
         startNewChat,
         selectChatSession,
+        isThinking, // Expose thinking state
     };
 };

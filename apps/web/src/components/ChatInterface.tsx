@@ -72,41 +72,55 @@ export const ChatHistory: React.FC<ChatHistoryProps> = ({
 };
 
 // Props for ChatMessageList
+
 interface ChatMessageListProps {
-    messages: ChatMessage[] | undefined;
+  messages: ChatMessage[] | undefined;
+  isThinking: boolean;
 }
 
-// ChatMessageList Component
-export const ChatMessageList: React.FC<ChatMessageListProps> = ({ messages }) => {
-    const endOfMessagesRef = useRef<HTMLDivElement>(null);
+export const ChatMessageList: React.FC<ChatMessageListProps> = ({
+  messages,
+  isThinking,
+}) => {
+  const endOfMessagesRef = useRef<HTMLDivElement>(null);
 
-    useEffect(() => {
-        endOfMessagesRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, [messages]);
+  useEffect(() => {
+    endOfMessagesRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, isThinking]);
 
-    return (
-        <div className="flex flex-col flex-grow h-[calc(100vh-16rem)] overflow-auto px-4 py-6 w-full">
-            {messages && messages.length > 0 ? (
-                messages.map((message) => (
-                    <div
-                        key={message.id}
-                        className={`chat-bubble ${message.sender === "user" ? "chat-bubble-user" : "chat-bubble-ai"
-                            } ${message.sender === "user" ? "ml-auto" : "mr-auto"} mb-3 max-w-[80%] break-words`}
-                    >
-                        <ReactMarkdown>{message.content}</ReactMarkdown>
-                    </div>
-                ))
-            ) : (
-                <div className="flex flex-col items-center justify-center h-full">
-                    <h3 className="text-2xl font-medium text-gray-500 mb-2">GistED AI Assistant</h3>
-                    <p className="text-gray-400 max-w-md text-center">
-                        Ask me anything about your studies, research papers, or learning materials.
-                    </p>
-                </div>
-            )}
-            <div ref={endOfMessagesRef} />
+  return (
+    <div className="flex flex-col flex-grow h-[calc(100vh-16rem)] overflow-auto px-4 py-6 w-full">
+      {messages && messages.length > 0 ? (
+        messages.map((message) => (
+          <div
+            key={message.id}
+            className={`chat-bubble ${
+              message.sender === "user" ? "chat-bubble-user" : "chat-bubble-ai"
+            } ${message.sender === "user" ? "ml-auto" : "mr-auto"} mb-3 max-w-[80%] break-words`}
+          >
+            <ReactMarkdown>{message.content}</ReactMarkdown>
+          </div>
+        ))
+      ) : (
+        <div className="flex flex-col items-center justify-center h-full">
+          <h3 className="text-2xl font-medium text-gray-500 mb-2">GistED AI Assistant</h3>
+          <p className="text-gray-400 max-w-md text-center">
+            Ask me anything about your studies, research papers, or learning materials.
+          </p>
         </div>
-    );
+      )}
+
+      {isThinking && (
+        <div className="chat-bubble chat-bubble-ai mr-auto mb-3 max-w-[80%] break-words">
+          <div className="flex items-center">
+            <div className="animate-pulse">Thinking...</div>
+          </div>
+        </div>
+      )}
+
+      <div ref={endOfMessagesRef} />
+    </div>
+  );
 };
 
 // Props for ChatInput

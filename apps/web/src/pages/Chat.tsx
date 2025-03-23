@@ -2,6 +2,7 @@ import NavigationBar from "@/components/NavigationBar";
 import { ChatHistory, ChatMessageList, ChatInput } from "@/components/ChatInterface";
 import { useChatState } from "@/hooks/useChatState";
 
+
 const Chat = () => {
   const {
     inputValue,
@@ -12,16 +13,18 @@ const Chat = () => {
     sendMessage,
     startNewChat,
     selectChatSession,
+    isThinking,
   } = useChatState();
 
   const activeChat = getActiveChat();
 
-
   const handleSendMessage = (isYtEnabled: boolean) => {
     if (inputValue.trim()) {
-      sendMessage(inputValue, isYtEnabled); // Pass the YouTube toggle state
+      sendMessage(inputValue, isYtEnabled);
+      setInputValue(""); // Clear input after sending
     }
   };
+
   return (
     <div className="min-h-screen bg-white p-0">
       <NavigationBar />
@@ -39,7 +42,7 @@ const Chat = () => {
           
           <div className="w-3/4 flex flex-col glass rounded-lg overflow-hidden">
             <div className="flex-1 overflow-hidden">
-              <ChatMessageList messages={activeChat?.messages} />
+              <ChatMessageList messages={activeChat?.messages} isThinking={isThinking} />
             </div>
             
             <ChatInput
@@ -53,5 +56,6 @@ const Chat = () => {
     </div>
   );
 };
+
 
 export default Chat;
