@@ -29,7 +29,7 @@ GistEd addresses these challenges by offering an all-in-one AI-powered platform 
 - **Frontend**: Vite.js
 - **Backend**: Node.js, Python
 - **Database**: PostgreSQL,faiss
-- **APIs**: Gemini, Groq,openrouterm,together 
+- **APIs**: Gemini, Groq,openrouter,together 
 - **DevOps**: docker
 
 ### Key Features
@@ -39,3 +39,43 @@ GistEd addresses these challenges by offering an all-in-one AI-powered platform 
 - Task management with calendar integration.  
 - Interactive doodle board for brainstorming.  
 - Convert handwritten notes to digital text.
+
+
+## Setup Instructions
+
+### Prerequisites
+- Node.js
+- Python
+- PostgreSQL
+
+## Installation and Running the Project
+
+### 1. Clone the Repository
+```
+git clone https://github.com/innov8-tist/GistEd.git
+cd GistEd
+```
+
+### 2. Install dependencies 
+```
+npm install
+cd apps/python
+pip install -r requirements.txt
+```
+
+
+### 3. Run the application
+```
+npm run dev
+```
+
+
+### Challenges Faced
+1. Email Automation (for Building the Lang Graph)
+2. Agentic AI (Building Custom Tools)
+3. Hybrid RAG Implementation
+4. Semantic and Vector Search
+
+### Future Enhancements
+1. Migrating to Cloud Providers for File Management
+2. Implementing reinforcement learning
