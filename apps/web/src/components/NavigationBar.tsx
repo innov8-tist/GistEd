@@ -1,7 +1,9 @@
 import { Link, useLocation } from "react-router-dom";
-import { MessageSquare, FileText, Library, CheckSquare,Image, Layout, Settings, LogOut } from 'lucide-react';
+import { 
+    MessageSquare, FileText, Library, CheckSquare, Image, Layout, Settings, LogOut 
+} from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
-import { logoutUser } from "../apis/auth"
+import { logoutUser } from "../apis/auth";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -25,26 +27,25 @@ const NavigationBar = () => {
             .then(() => {
                 invalidate();
                 toast({
-                    title: "logged out successfully",
-                    description: "you have been logged out of your account.",
+                    title: "Logged out successfully",
+                    description: "You have been logged out of your account.",
                 });
             })
             .catch((error) => {
-                console.error("logout failed:", error);
+                console.error("Logout failed:", error);
                 toast({
-                    title: "logout failed",
-                    description: "an error occurred while logging out. please try again.",
+                    title: "Logout failed",
+                    description: "An error occurred while logging out. Please try again.",
                     variant: "destructive",
                 });
             });
     }
 
-
-
     return (
         <div className="w-full max-w-5xl mx-auto rounded-full mb-6 backdrop-blur-md bg-white/80 dark:bg-gray-900/80 border border-gray-200 dark:border-gray-800 shadow-sm">
             <nav className="flex items-center justify-between px-6 py-3">
                 <div className="flex items-center space-x-4">
+                    {/* Navigation Links */}
                     {[
                         { to: "/chat", label: "Chat", icon: MessageSquare },
                         { to: "/docs", label: "Docs", icon: FileText },
@@ -55,26 +56,28 @@ const NavigationBar = () => {
                         <Link
                             key={to}
                             to={to}
-                            className={`flex items-center space-x-2 px-3 py-2 rounded-md transition-colors ${isActive(to)
-                                ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-                                : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800/60'
-                                }`}
+                            className={`flex items-center space-x-2 px-3 py-2 rounded-md transition-colors ${
+                                isActive(to)
+                                    ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                                    : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800/60'
+                            }`}
                         >
                             <Icon size={18} />
                             <span className="hidden sm:inline">{label}</span>
                         </Link>
-
-          <Link 
-            to="/image" 
-            className={`nav-link flex items-center space-x-2 ${isActive('/board') ? 'nav-link-active' : ''}`}
-          >
-            <Image size={18} className={isActive('/image') ? 'text-blue-600' : 'text-gray-600'} />
-            <span>Image</span>
-          </Link>
-
                     ))}
+
+                    {/* Separate Image Link (moved outside of map function) */}
+                    <Link 
+                        to="/image" 
+                        className={`nav-link flex items-center space-x-2 ${isActive('/image') ? 'nav-link-active' : ''}`}
+                    >
+                        <Image size={18} className={isActive('/image') ? 'text-blue-600' : 'text-gray-600'} />
+                        <span>Image</span>
+                    </Link>
                 </div>
 
+                {/* User Profile & Dropdown Menu */}
                 <div className="flex items-center">
                     {isLoading ? (
                         <p className="text-gray-600 dark:text-gray-300">Loading...</p>
@@ -126,4 +129,3 @@ const NavigationBar = () => {
 };
 
 export default NavigationBar;
-
