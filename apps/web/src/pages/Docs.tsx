@@ -1,132 +1,86 @@
-
-import React, { useState } from "react";
+import { useEffect, useState } from "react";
 import NavigationBar from "@/components/NavigationBar";
-import { DocumentSections, DocumentChatInput } from "@/components/DocumentSection";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { DocumentSections, DocumentChatInput, CustomFile } from "@/components/DocumentSection";
+import instance from "@/axios/axios.config";
+import useAuth from "@/hooks/useAuth";
 
-interface File {
-  id: string;
-  title: string;
-  type: "pdf" | "doc" | "txt";
-  dateModified: Date;
-}
 
 interface Section {
-  id: string;
-  title: string;
-  files: File[];
-  isExpanded: boolean;
+    id: string;
+    title: string;
+    files: CustomFile[];
+    isExpanded: boolean;
 }
 
-const initialSections: Section[] = [
-  {
-    id: "1",
-    title: "Research Papers",
-    files: [
-      {
-        id: "file1",
-        title: "Machine Learning Fundamentals.pdf",
-        type: "pdf",
-        dateModified: new Date(2023, 2, 15),
-      },
-      {
-        id: "file2",
-        title: "Neural Networks Overview.pdf",
-        type: "pdf",
-        dateModified: new Date(2023, 3, 20),
-      },
-    ],
-    isExpanded: true,
-  },
-  {
-    id: "2",
-    title: "Course Notes",
-    files: [
-      {
-        id: "file3",
-        title: "Advanced Mathematics.doc",
-        type: "doc",
-        dateModified: new Date(2023, 1, 10),
-      },
-      {
-        id: "file4",
-        title: "Data Structures.txt",
-        type: "txt",
-        dateModified: new Date(2023, 0, 5),
-      },
-    ],
-    isExpanded: false,
-  },
-  {
-    id: "3",
-    title: "Project Documentation",
-    files: [
-      {
-        id: "file5",
-        title: "Project Plan.pdf",
-        type: "pdf",
-        dateModified: new Date(2023, 4, 8),
-      },
-    ],
-    isExpanded: false,
-  },
-  {
-    id: "4",
-    title: "Study Guides",
-    files: [
-      {
-        id: "file6",
-        title: "Exam Preparation.pdf",
-        type: "pdf",
-        dateModified: new Date(2023, 5, 1),
-      },
-      {
-        id: "file7",
-        title: "Quick References.doc",
-        type: "doc",
-        dateModified: new Date(2023, 5, 12),
-      },
-    ],
-    isExpanded: false,
-  },
-];
 
 const Docs = () => {
-  const [sections, setSections] = useState<Section[]>(initialSections);
-  const isMobile = useIsMobile();
+    const [sections, setSections] = useState<Section[]>([]);
+    const { isLoading, user } = useAuth()
 
-  const handleToggleSection = (id: string) => {
-    setSections(prevSections =>
-      prevSections.map(section =>
-        section.id === id
-          ? { ...section, isExpanded: !section.isExpanded }
-          : section
-      )
-    );
-  };
+    async function fetchFilesByAuthor(authorId: string): Promise<Section[]> {
+        const { data } = await instance.get(`/cloud/author/${authorId}`);
 
-  const handleAddFile = () => {
-    // This would typically open a file upload dialog
-    console.log("Add file button clicked");
-  };
+        const groupedFiles = data.reduce((acc: Record<string, CustomFile[]>, file: any) => {
+            const section = file.section;
+            if (!acc[section]) {
+                acc[section] = [];
+            }
+            acc[section].push({
+                id: file.id,
+                title: file.title,
+                type: file.filetype as "pdf" | "doc" | "txt", 
+                dateModified: new Date(file.createdAt),
+                path: file.path,
+                dname: file.dname
+            });
+            return acc;
+        }, {});
 
-  return (
-    <div className="min-h-screen bg-white">
-      <NavigationBar />
-      
-      <div className="w-full px-0 md:px-4 max-w-[100vw] overflow-x-hidden">
-        <div className="glass rounded-lg p-4 md:p-6 mb-4 mx-auto">
-          <DocumentSections
-            sections={sections}
-            onToggleSection={handleToggleSection}
-            onAddFile={handleAddFile}
-          />
-          
-          <DocumentChatInput />
+        const newsections: Section[] = Object.keys(groupedFiles).map((sectionTitle) => ({
+            id: `section-${sectionTitle}`, // Dummy ID for section
+            title: sectionTitle,
+            files: groupedFiles[sectionTitle],
+            isExpanded: false, // Default to collapsed
+        }));
+
+        console.log(newsections)
+        setSections([...newsections])
+        return sections;
+    }
+    const handleToggleSection = (id: string) => {
+        setSections(prevSections =>
+            prevSections.map(section =>
+                section.id === id
+                    ? { ...section, isExpanded: !section.isExpanded }
+                    : section
+            )
+        );
+    };
+
+    useEffect(() => {
+        if (user == null || user == undefined) return
+        fetchFilesByAuthor(user.id)
+    }, [user,isLoading])
+
+
+    return (
+        <div className="min-h-screen bg-white">
+            <NavigationBar />
+
+            <div className="w-full px-0 md:px-4 max-w-[100vw] overflow-x-hidden">
+                <div className="glass rounded-lg p-4 md:p-6 mb-4 mx-auto">
+                    <DocumentSections
+                        sections={sections}
+                        onToggleSection={handleToggleSection}
+                    />
+                    <div className="fixed bottom-16 right-4">
+                    </div>
+
+                    <DocumentChatInput />
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
-  );
+    );
 };
 
 export default Docs;

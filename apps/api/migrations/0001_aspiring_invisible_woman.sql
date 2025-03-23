@@ -1,0 +1,1 @@
+ALTER TABLE "cloud" ADD COLUMN "dname" text NOT NULL;

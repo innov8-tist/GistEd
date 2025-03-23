@@ -10,6 +10,7 @@ export function zodMiddleWare(
 ): void {
   console.log('[Error] Zod Error Occured');
   /* eslint-enable */
+console.log(err)
   if (err instanceof z.ZodError) {
     res.status(400).json({
       error: err.flatten(),
