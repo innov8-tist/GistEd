@@ -1,12 +1,10 @@
-
 import React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 
-import Index from "./pages/Index";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import Chat from "./pages/Chat";
@@ -14,6 +12,7 @@ import Docs from "./pages/Docs";
 import Library from "./pages/Library";
 import Tasks from "./pages/Tasks";
 import Board from "./pages/Board";
+import Image from "./pages/Image";
 import NotFound from "./pages/NotFound";
 
 // Create a client
@@ -35,6 +34,7 @@ const App = () => {
               <Route path="/library" element={<Library />} />
               <Route path="/tasks" element={<Tasks />} />
               <Route path="/board" element={<Board />} />
+              <Route path="/image" element={<Image/>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
