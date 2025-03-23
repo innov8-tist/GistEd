@@ -23,37 +23,8 @@ const Index = () => {
           </div>
           
           <ImageUploader />
-          
-          <div className="mt-16 flex flex-col md:flex-row justify-between gap-8 animate-fade-up">
-            <div className="glass-dark p-6 rounded-xl flex-1">
-              <h3 className="text-base font-medium mb-2">Drag & Drop</h3>
-              <p className="text-sm text-gray-600">
-                Simply drag your image into the upload area or select from your device.
-              </p>
-            </div>
-            
-            <div className="glass-dark p-6 rounded-xl flex-1">
-              <h3 className="text-base font-medium mb-2">Instantly Share</h3>
-              <p className="text-sm text-gray-600">
-                Click the send button in the corner to share your image immediately.
-              </p>
-            </div>
-            
-            <div className="glass-dark p-6 rounded-xl flex-1">
-              <h3 className="text-base font-medium mb-2">Securely Stored</h3>
-              <p className="text-sm text-gray-600">
-                Your images are securely stored and only accessible to those you share with.
-              </p>
-            </div>
           </div>
-        </div>
       </main>
-      
-      <footer className="py-6 border-t border-gray-100">
-        <div className="container mx-auto px-4 text-center text-sm text-gray-500">
-          <p>© 2023 MinimalUpload. Designed with precision.</p>
-        </div>
-      </footer>
     </div>
   );
 };
