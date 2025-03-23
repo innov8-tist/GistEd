@@ -35,7 +35,7 @@ const Landing = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-white flex flex-col overflow-hidden">
+    <div className="min-h-screen bg-white flex flex-col overflow-auto">
       {/* Navigation */}
       <nav className="glass w-full py-4 px-6 flex items-center justify-between">
         <div className="flex items-center">
