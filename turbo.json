@@ -5,7 +5,14 @@
     "build": {
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "outputs": [".next/**", "!.next/cache/**"]
+      "outputs": [".next/**", "!.next/cache/**", "dist/**"],
+      "env": [
+        "SERVER_PROD_URL",
+        "SERVER_DEV_URL",
+        "CLIENT_DEV_URL",
+        "CLIENT_PROD_URL",
+        "VITE_SERVER_URL"
+      ]
     },
     "lint": {
       "dependsOn": ["^lint"]
