@@ -1,5 +1,14 @@
 # Welcome to your Lovable project
 
+## Demo Access
+
+The application is deployed in demo mode. You can access it without a backend server using these credentials:
+
+- **Email**: `demo@gisted.com`
+- **Password**: `demo123`
+
+This allows you to explore the UI and features without requiring the backend API to be running.
+
 ## Project info
 
 **URL**: https://lovable.dev/projects/ced47370-dd81-40dd-8473-e849f7b0618c

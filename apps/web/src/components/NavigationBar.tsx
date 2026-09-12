@@ -3,6 +3,7 @@ import {
     MessageSquare, FileText, Library, CheckSquare, Image, Layout, Settings, LogOut 
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import { Badge } from "./ui/badge";
 import { logoutUser } from "../apis/auth";
 import {
     DropdownMenu,
@@ -17,12 +18,19 @@ import { useToast } from "@/hooks/use-toast";
 
 const NavigationBar = () => {
     const location = useLocation();
-    const { user, isLoading, isError, error, invalidate } = useAuth();
+    const { user, isLoading, isError, error, invalidate, isMockMode } = useAuth();
     const { toast } = useToast();
 
     const isActive = (path: string) => location.pathname === path;
 
     function handlelogout() {
+        if (isMockMode) {
+            // Handle mock logout
+            localStorage.removeItem('mockUser');
+            window.location.href = '/login';
+            return;
+        }
+        
         logoutUser()
             .then(() => {
                 invalidate();
@@ -78,7 +86,12 @@ const NavigationBar = () => {
                 </div>
 
                 {/* User Profile & Dropdown Menu */}
-                <div className="flex items-center">
+                <div className="flex items-center gap-2">
+                    {isMockMode && (
+                        <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 border-yellow-300">
+                            Demo Mode
+                        </Badge>
+                    )}
                     {isLoading ? (
                         <p className="text-gray-600 dark:text-gray-300">Loading...</p>
                     ) : user ? (

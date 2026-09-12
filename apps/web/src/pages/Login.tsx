@@ -4,16 +4,36 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card";
-import { Github, Mail } from "lucide-react";
+import { Github, Mail, Info } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const Login = () => {
     const navigate = useNavigate();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [error, setError] = useState("");
 
     const handleLogin = (e: React.FormEvent) => {
         e.preventDefault();
-        navigate("/chat");
+        setError("");
+
+        // Mock credentials
+        if (email === "demo@gisted.com" && password === "demo123") {
+            // Store mock user data matching the User type
+            localStorage.setItem("mockUser", JSON.stringify({
+                email: "demo@gisted.com",
+                id: "demo-user-001",
+                name: "Demo User",
+                pwd: null,
+                provider: "google" as const,
+                providerid: "demo-provider-001",
+                pfp: null,
+                isDemoMode: true
+            }));
+            navigate("/chat");
+        } else {
+            setError("Invalid credentials. Use: demo@gisted.com / demo123");
+        }
     };
 
     return (
@@ -24,6 +44,19 @@ const Login = () => {
                     <p className="text-gray-500">Enter your credentials to continue</p>
                 </CardHeader>
                 <CardContent>
+                    <Alert className="mb-4 bg-blue-50 border-blue-200">
+                        <Info className="h-4 w-4 text-blue-600" />
+                        <AlertDescription className="text-sm text-blue-800">
+                            <strong>Demo Mode:</strong> Email: <code className="bg-blue-100 px-1 rounded">demo@gisted.com</code> | Password: <code className="bg-blue-100 px-1 rounded">demo123</code>
+                        </AlertDescription>
+                    </Alert>
+                    {error && (
+                        <Alert className="mb-4 bg-red-50 border-red-200">
+                            <AlertDescription className="text-sm text-red-800">
+                                {error}
+                            </AlertDescription>
+                        </Alert>
+                    )}
                     <form onSubmit={handleLogin} className="space-y-4">
                         <div className="space-y-2">
                             <Input
@@ -65,18 +98,18 @@ const Login = () => {
                     <div className="grid grid-cols-2 gap-4">
                         <Button
                             onClick={() => {
-                                window.location.href = 'http://localhost:8000/auth/github/login';
+                                alert("OAuth login requires backend server. Please use demo credentials for now.");
                             }}
-                            variant="outline" className="w-full">
+                            variant="outline" className="w-full" type="button">
                             <Github
                                 className="mr-2 h-4 w-4" />
                             Github
                         </Button>
                         <Button
                             onClick={() => {
-                                window.location.href = 'http://localhost:8000/auth/google/login';
+                                alert("OAuth login requires backend server. Please use demo credentials for now.");
                             }}
-                            variant="outline" className="w-full">
+                            variant="outline" className="w-full" type="button">
                             <Mail className="mr-2 h-4 w-4" />
                             Google
                         </Button>
